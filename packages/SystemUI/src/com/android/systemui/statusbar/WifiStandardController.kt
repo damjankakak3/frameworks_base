@@ -19,7 +19,6 @@ import android.content.Context
 import android.database.ContentObserver
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.net.wifi.ScanResult
 import android.net.wifi.WifiManager
 import android.os.UserHandle
 import android.provider.Settings
@@ -29,12 +28,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 
 object WifiStandardController {
-
-    // Wi-Fi 6E is not a distinct value of WifiInfo.getWifiStandard(): it is
-    // 802.11ax operating in the 6 GHz band, so it has to be derived from the
-    // frequency. Sentinel kept well clear of the real ScanResult constants.
-    const val WIFI_STANDARD_11AX_6GHZ = 106
-
 
     private var view: WifiStandardImageView? = null
     private var context: Context? = null
@@ -74,13 +67,7 @@ object WifiStandardController {
         while (true) {
             val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
             val wifiStandard = if (networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true) {
-                val wifiInfo = wifiManager.connectionInfo
-                if (wifiInfo.wifiStandard == ScanResult.WIFI_STANDARD_11AX
-                        && ScanResult.is6GHz(wifiInfo.frequency)) {
-                    WIFI_STANDARD_11AX_6GHZ
-                } else {
-                    wifiInfo.wifiStandard
-                }
+                wifiManager.connectionInfo.wifiStandard
             } else {
                 -1
             }
