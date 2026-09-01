@@ -17,6 +17,7 @@
 package com.android.systemui.statusbar
 
 import android.content.Context
+import android.net.wifi.ScanResult
 import android.util.AttributeSet
 import android.view.ViewGroup.MarginLayoutParams
 import android.widget.ImageView
@@ -39,24 +40,26 @@ class WifiStandardImageView @JvmOverloads constructor(
 
     fun updateWifiStatus(wifiStandard: Int, wifiStandardEnabled: Boolean) {
         post {
-            if (!wifiStandardEnabled || wifiStandard < 4) {
+            // Note the ScanResult values: 11AD (7) is 60 GHz WiGig, NOT Wi-Fi 7.
+            // Wi-Fi 7 is 11BE (8). The previous mapping labelled WiGig as Wi-Fi 7
+            // and never showed anything for real Wi-Fi 7 hardware.
+            val drawableId = if (!wifiStandardEnabled) 0 else when (wifiStandard) {
+                ScanResult.WIFI_STANDARD_11N -> R.drawable.ic_wifi_standard_4
+                ScanResult.WIFI_STANDARD_11AC -> R.drawable.ic_wifi_standard_5
+                ScanResult.WIFI_STANDARD_11AX -> R.drawable.ic_wifi_standard_6
+                WifiStandardController.WIFI_STANDARD_11AX_6GHZ -> R.drawable.ic_wifi_standard_6e
+                ScanResult.WIFI_STANDARD_11BE -> R.drawable.ic_wifi_standard_7
+                else -> 0
+            }
+
+            if (drawableId == 0) {
                 visibility = GONE
                 layoutParams = (layoutParams as MarginLayoutParams).apply { marginEnd = 0 }
             } else {
-                val drawableId = when (wifiStandard) {
-                    4 -> R.drawable.ic_wifi_standard_4
-                    5 -> R.drawable.ic_wifi_standard_5
-                    6 -> R.drawable.ic_wifi_standard_6
-                    7 -> R.drawable.ic_wifi_standard_7
-                    else -> 0
-                }
-
-                if (drawableId > 0) {
-                    setImageResource(drawableId)
-                    visibility = VISIBLE
-                    layoutParams = (layoutParams as MarginLayoutParams).apply {
-                        marginEnd = resources.getDimensionPixelSize(R.dimen.status_bar_airplane_spacer_width)
-                    }
+                setImageResource(drawableId)
+                visibility = VISIBLE
+                layoutParams = (layoutParams as MarginLayoutParams).apply {
+                    marginEnd = resources.getDimensionPixelSize(R.dimen.status_bar_airplane_spacer_width)
                 }
             }
         }
